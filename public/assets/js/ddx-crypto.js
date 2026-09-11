@@ -90,8 +90,21 @@
     return JSON.parse(dec.decode(plain));
   }
 
+  /**
+   * The sender seals under the code as the SERVER issued it (`ABCDEFGH`) and
+   * the receiver types it as the screen shows it (`abcd-efgh`). Both sides
+   * must derive from the same string or the typed-code path silently fails
+   * every time, so both sides canonicalise first — including the Crockford
+   * I/L -> 1 and O -> 0 substitutions, which are the whole reason the
+   * alphabet excludes those letters.
+   */
+  const canonicalCode = (raw) => String(raw).toUpperCase().replace(/[^0-9A-Z]/g, '')
+    .replace(/[IL]/g, '1').replace(/O/g, '0');
+  const canonicalPin = (raw) => String(raw).replace(/[^0-9]/g, '');
+
   async function deriveWrapKey(code, pin, salt, iters) {
-    const base = await crypto.subtle.importKey('raw', enc.encode(`${code}:${pin}`), 'PBKDF2', false, ['deriveBits']);
+    const material = `${canonicalCode(code)}:${canonicalPin(pin)}`;
+    const base = await crypto.subtle.importKey('raw', enc.encode(material), 'PBKDF2', false, ['deriveBits']);
     const bits = await crypto.subtle.deriveBits(
       { name: 'PBKDF2', salt, iterations: iters, hash: 'SHA-256' }, base, KEY_BYTES * 8,
     );
@@ -169,7 +182,7 @@
     KEY_BYTES, IV_BYTES, TAG_BYTES, PBKDF2_ITERS,
     randomBytes, toB64, fromB64, toB64Url,
     sealChunk, openChunk, sealJson, openJson,
-    wrapKeyWithPin, unwrapKeyWithPin,
+    wrapKeyWithPin, unwrapKeyWithPin, canonicalCode, canonicalPin,
     gzip, gunzip, canGzip, splitChunks, concatChunks,
     newKey: () => randomBytes(KEY_BYTES),
   };

@@ -133,3 +133,30 @@ test('base64url output is fragment-safe', () => {
     assert.deepEqual(Buffer.from(C.fromB64(s)).length, 32);
   }
 });
+
+test('pinWrap survives the code and PIN being typed the way a person types them', async () => {
+  const key = C.newKey();
+  // The sender seals under what the server issued...
+  const wrap = await C.wrapKeyWithPin(key, 'ABCD1234', '482719');
+
+  // ...and the receiver types what the screen showed them. Every one of these
+  // has to derive the same key, or the typed-code path fails 100% of the time
+  // while looking exactly like a wrong PIN.
+  for (const [code, pin] of [
+    ['ABCD-1234', '482-719'],
+    ['abcd-1234', '482 719'],
+    ['  ABCD 1234  ', '482719'],
+  ]) {
+    assert.deepEqual(
+      Buffer.from(await C.unwrapKeyWithPin(wrap, code, pin)), Buffer.from(key),
+      `typed as ${JSON.stringify(code)} / ${JSON.stringify(pin)}`,
+    );
+  }
+});
+
+test('the Crockford substitutions the alphabet exists for are applied', () => {
+  // I, L, O and U are excluded from the alphabet precisely because they get
+  // misread. Reading a 1 back as an I has to still resolve to the same code.
+  assert.equal(C.canonicalCode('IL0O-1234'), '11001234');
+  assert.equal(C.canonicalPin('482-719'), '482719');
+});
