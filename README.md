@@ -162,5 +162,12 @@ in the hub.
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE). The vendored QR encoder is MIT, © 2009 Kazuhiko
-Arase; see `public/assets/js/qrcode.LICENSE`.
+Apache-2.0 — see [LICENSE](LICENSE).
+
+> Note: DraconDex-APP and DraconDex-EXE ship MIT, and DraconDex-WEB ships
+> Apache-2.0. This repo follows the licence chosen when it was created; worth
+> settling the project-wide inconsistency separately rather than here.
+
+The vendored QR encoder is MIT, © 2009 Kazuhiko Arase — see
+`public/assets/js/qrcode.LICENSE`. Apache-2.0 and MIT are compatible for
+redistribution, and that file keeps its own notice as its licence requires.
