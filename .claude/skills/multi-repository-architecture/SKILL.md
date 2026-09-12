@@ -64,11 +64,11 @@ directed.
 | a skill, an agent, `chain.json` | **APP** | then `node tools/mirror-claude.mjs` |
 | a plan, a process write-up, the changelog | **APP** | `Plan.md`, `process/`, `docs/CHANGELOG.md` stay project-wide |
 
-## Two rules that are not negotiable
+## Three rules that are not negotiable
 
 **0. The DDX Transfer wire format is a three-way contract.**
 `public/assets/js/ddx-crypto.js` in **TRX** is the source of truth;
-`electron/src/db/transfer.js` in **EXE** and
+`electron/src/db/transfer-crypto.js` in **EXE** and
 `lib/data/services/ddx_transfer_service.dart` in **APK** must agree with it
 byte for byte. A mismatch does not throw — it delivers a vault that imports as
 nonsense. Change one, change all three.
