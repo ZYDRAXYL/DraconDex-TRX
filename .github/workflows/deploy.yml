@@ -1,0 +1,71 @@
+name: Deploy
+
+# A manual fallback, not the normal path.
+#
+# Normally this project deploys because the Netlify project `dracondex-transfer`
+# is linked to this repository, and Netlify builds `main` on push. This workflow
+# exists for the case where that link is absent or broken — it uploads the repo
+# to Netlify's build system over the API instead, reaching the same site.
+#
+# It is `workflow_dispatch` only, deliberately. With a push trigger it would
+# race the linked deploy on every commit to main: two builds, two publishes,
+# and whichever finished last wins. Run it by hand when you actually need it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Why this manual deploy is needed (recorded in the run)
+        required: false
+        default: the repository link is unavailable
+
+permissions:
+  contents: read
+
+# Two deploys publishing at once is how a half-updated site happens.
+concurrency:
+  group: netlify-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v5
+
+      # Fail here with a sentence someone can act on, rather than letting the
+      # CLI fail further down with an auth error that reads like an outage.
+      - name: Check the token is present
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ]; then
+            echo "::error::NETLIFY_AUTH_TOKEN is not set. Create a personal access token at" \
+                 "https://app.netlify.com/user/applications and add it as a repository secret."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      # The service has no build step, so the tests are the only gate there is.
+      # A deploy that skips them is worse than no deploy: the wire format is a
+      # three-way contract and a break in it is silent.
+      - run: npm test
+
+      # `--build` is what bundles netlify/functions/*.mts through esbuild as
+      # netlify.toml specifies. Without it only public/ would be published and
+      # every /api/* path would 404.
+      - name: Deploy to production
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: >
+          npx --yes netlify-cli@19 deploy
+          --build
+          --prod
+          --site be66a557-7163-43ed-b977-fecae7f56fe2
+          --message "manual deploy from ${{ github.sha }} — ${{ inputs.reason }}"
