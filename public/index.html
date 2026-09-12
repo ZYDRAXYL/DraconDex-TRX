@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en" data-theme="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DDX Transfer</title>
+<meta name="description" content="Send a DraconDex Nexus from one device to another. No account, encrypted in your browser, gone in 30 minutes.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/assets/css/trx.css">
+<!-- In <head> and synchronous on purpose: the stored theme has to land
+     before first paint or every load flashes the wrong colours. -->
+<script src="/assets/js/theme.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1 data-i18n="title">DDX Transfer</h1>
+    <p data-i18n="tagline">Move a Nexus between devices — no account, nothing kept.</p>
+    <p style="margin-top:10px">
+      <button id="lang-toggle" class="btn secondary" style="width:auto;margin:0;padding:5px 12px;font-size:.8rem">TH</button>
+      <button id="theme-toggle" class="btn secondary" style="width:auto;margin:0;padding:5px 12px;font-size:.8rem">◐</button>
+    </p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button id="tab-send" role="tab" aria-selected="true" aria-controls="panel-send" data-i18n="tab_send">Send</button>
+    <button id="tab-recv" role="tab" aria-selected="false" aria-controls="panel-recv" data-i18n="tab_receive">Receive</button>
+  </div>
+
+  <!-- ================= SEND ================= -->
+  <section id="panel-send" role="tabpanel" aria-labelledby="tab-send">
+    <div class="card" id="send-form">
+      <h2 data-i18n="send_head">Send a Nexus file</h2>
+
+      <div class="field">
+        <label for="send-file" data-i18n="send_file_label">A DraconDex export (.ddx)</label>
+        <input type="file" id="send-file" accept=".ddx,.json,.mdx">
+      </div>
+
+      <div class="field">
+        <label for="send-name" data-i18n="send_name_label">The name the receiver will see</label>
+        <input type="text" id="send-name" autocomplete="off" spellcheck="false">
+      </div>
+
+      <label class="switch">
+        <input type="checkbox" id="send-typed" checked>
+        <span>
+          <b data-i18n="send_typed_title">Allow receiving by typed code</b>
+          <span data-i18n="send_typed_hint">On, the receiver can type the code and PIN, and the service holds the key sealed under that PIN while it waits. Off, the QR or link is the only way in and the service cannot read the file at all.</span>
+        </span>
+      </label>
+
+      <button class="btn" id="send-go" disabled data-i18n="send_go">Create transfer</button>
+      <progress id="send-progress" class="hidden" max="1" value="0"></progress>
+      <div id="send-note" class="note hidden"></div>
+      <div class="note" data-i18n="send_hint_file">This file comes from Settings → App data → Database → Export Nexus.</div>
+    </div>
+
+    <div class="card hidden" id="send-result">
+      <h2 data-i18n="send_ready">Ready to send</h2>
+
+      <div class="codebox">
+        <div class="label" data-i18n="send_code_label">Transfer code</div>
+        <div class="value" id="send-code">----–----</div>
+        <div id="send-pin-row">
+          <div class="label" data-i18n="send_pin_label">PIN</div>
+          <div class="value pin" id="send-pin">---–---</div>
+        </div>
+        <div class="qr" id="send-qr"></div>
+      </div>
+
+      <div class="note" id="send-mode"></div>
+      <div class="note warn" data-i18n="send_expiry">This code expires in 30 minutes, and is deleted the moment it is received.</div>
+      <div class="note ok" id="send-status" data-i18n="send_waiting">Waiting for the receiver…</div>
+
+      <button class="btn secondary" id="send-copy" data-i18n="send_copy">Copy link</button>
+      <button class="btn danger" id="send-cancel" data-i18n="send_cancel">Cancel this transfer</button>
+    </div>
+  </section>
+
+  <!-- ================= RECEIVE ================= -->
+  <section id="panel-recv" role="tabpanel" aria-labelledby="tab-recv" class="hidden">
+    <div class="card" id="recv-form">
+      <h2 data-i18n="recv_head">Receive a Nexus file</h2>
+
+      <div class="field">
+        <label for="recv-code" data-i18n="recv_code_label">Transfer code</label>
+        <input type="text" id="recv-code" class="code-input" placeholder="ABCD-EFGH"
+               autocomplete="off" spellcheck="false" inputmode="latin"
+               data-i18n-attr="aria-label:recv_code_label">
+      </div>
+
+      <div class="field">
+        <label for="recv-pin" data-i18n="recv_pin_label">PIN</label>
+        <input type="text" id="recv-pin" class="code-input" placeholder="482-719"
+               autocomplete="off" spellcheck="false" inputmode="numeric"
+               data-i18n-attr="aria-label:recv_pin_label">
+      </div>
+
+      <button class="btn" id="recv-verify" data-i18n="recv_verify">Verify</button>
+      <div id="recv-note" class="note hidden"></div>
+    </div>
+
+    <!-- The second step. Nothing is downloaded until the person has read this
+         card and pressed Receive. -->
+    <div class="card hidden" id="recv-card">
+      <h2 data-i18n="recv_found">Transfer found</h2>
+      <div class="manifest">
+        <dl>
+          <dt data-i18n="recv_name_label">Project</dt>   <dd class="name" id="recv-name">—</dd>
+          <dt data-i18n="recv_size_label">Size</dt>      <dd id="recv-size">—</dd>
+          <dt data-i18n="recv_created_label">Created</dt><dd id="recv-created">—</dd>
+          <dt data-i18n="recv_source_label">Sent from</dt><dd id="recv-source">—</dd>
+        </dl>
+      </div>
+      <button class="btn" id="recv-go" data-i18n="recv_go">Receive</button>
+      <progress id="recv-progress" class="hidden" max="1" value="0"></progress>
+      <div class="note" id="recv-status" data-i18n="recv_hint">Nothing is downloaded until you press Receive.</div>
+    </div>
+  </section>
+
+  <footer>
+    <p data-i18n="footer_privacy">Files are encrypted on the sending device before upload, and deleted once received or after 30 minutes.</p>
+    <p><a href="https://github.com/ZYDRAXYL/DraconDex-TRX">DraconDex-TRX</a></p>
+  </footer>
+
+</div>
+
+<script src="/assets/js/strings.th.js"></script>
+<script src="/assets/js/lang.js"></script>
+<script src="/assets/js/qrcode.js"></script>
+<script src="/assets/js/ddx-crypto.js"></script>
+<script src="/assets/js/ddx-api.js"></script>
+<script src="/assets/js/ddx-ui.js"></script>
+<script src="/assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+name: Test
+
+# The service has no build step, so this is the only gate before a deploy:
+# the crypto contract (which three separate clients have to agree with) and
+# the protocol itself, driven through the real handlers against an in-memory
+# blob store.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm test

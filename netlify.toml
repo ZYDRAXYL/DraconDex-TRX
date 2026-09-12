@@ -1,0 +1,30 @@
+# DraconDex Transfer — no framework, no build step. The `public/` tree is
+# served as-is and every dynamic path is a function declared in its own file
+# via `export const config` (see netlify/functions/*.mts).
+
+[build]
+  publish  = "public"
+  command  = ""
+
+[functions]
+  directory     = "netlify/functions"
+  node_bundler  = "esbuild"
+
+# The QR/link landing page is one static file that reads :code from the path.
+# Netlify will not rewrite to a static asset without this, and a 404 here
+# means every scanned QR dead-ends.
+[[redirects]]
+  from   = "/t/*"
+  to     = "/t/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options         = "DENY"
+    X-Content-Type-Options  = "nosniff"
+    Referrer-Policy         = "no-referrer"
+    # No third-party anything: the QR encoder and the crypto are both local,
+    # so the page never needs an off-origin fetch. `connect-src 'self'` is
+    # what keeps a compromised script from posting a decrypted vault out.
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"

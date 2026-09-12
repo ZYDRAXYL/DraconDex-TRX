@@ -1,0 +1,16 @@
+{
+  "name": "dracondex-trx",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DDX Transfer \u2014 temporary hand-off service for DraconDex Nexus files",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "test": "node --experimental-strip-types --experimental-test-module-mocks --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "@netlify/functions": "^3.0.0"
+  }
+}
