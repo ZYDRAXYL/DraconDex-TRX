@@ -7,7 +7,8 @@
   "type": "module",
   "scripts": {
     "dev": "netlify dev",
-    "test": "node --experimental-strip-types --experimental-test-module-mocks --test test/*.test.mjs"
+    "test": "node --experimental-strip-types --experimental-test-module-mocks --test test/*.test.mjs",
+    "sendkey": "node --experimental-strip-types --no-warnings scripts/sendkey.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^8.1.0",

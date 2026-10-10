@@ -44,15 +44,25 @@
    * Uploads a snapshot and returns everything the sender has to show:
    * the two codes, the QR/link, and the handle needed to poll or cancel.
    */
-  async function send({ base, snapshot, name, allowTypedCode = true, source = 'web', onProgress }) {
+  async function send({ base, snapshot, name, sendKey = '', allowTypedCode = true, source = 'web', onProgress }) {
     const key = C.newKey();
     const { data: body, compression } = await C.gzip(snapshot);
 
-    const created = await call(api(base, '/api/create'), {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sizeBytes: body.length }),
-    });
+    // sendKey is this week's send key (netlify/functions/_lib/sendkey.mts).
+    // Sent on every create; a service with the gate off ignores it. `locked`
+    // from create means too many wrong KEYS, not PINs — renamed so the UI can
+    // say which.
+    let created;
+    try {
+      created = await call(api(base, '/api/create'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sizeBytes: body.length, sendKey: String(sendKey || '') }),
+      });
+    } catch (e) {
+      if (e.code === 'locked') throw new TransferError('send_key_locked');
+      throw e;
+    }
 
     // The framing adds an IV and a GCM tag per chunk, so the plaintext slice
     // has to be smaller than the server's limit by exactly that much or the

@@ -52,6 +52,13 @@
         </span>
       </label>
 
+      <div class="field">
+        <label for="send-key" data-i18n="send_key_label">Send key</label>
+        <input type="text" id="send-key" class="code-input" placeholder="XXXX-XXXX-XXXX"
+               autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16">
+        <div class="note" data-i18n="send_key_hint">Ask whoever runs this service for this week's key. It changes every Monday.</div>
+      </div>
+
       <button class="btn" id="send-go" disabled data-i18n="send_go">Create transfer</button>
       <progress id="send-progress" class="hidden" max="1" value="0"></progress>
       <div id="send-note" class="note hidden"></div>

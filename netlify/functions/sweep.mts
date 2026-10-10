@@ -1,5 +1,6 @@
 import type { Config } from '@netlify/functions';
 import { transferStore, purgeTransfer, type TransferMeta } from './_lib/store.mts';
+import { sweepFailures } from './_lib/sendkey.mts';
 
 /**
  * Expiry is checked on every read, but a transfer nobody ever comes back for
@@ -26,7 +27,11 @@ export default async () => {
     if (now > meta.expiresAt) { await purgeTransfer(meta); purged++; }
   }
 
-  console.log(`[sweep] scanned ${scanned} transfer(s), purged ${purged}`);
+  // Send-key lockout counters past their window — they hold nothing but a
+  // keyed hash of an address and a count, but nothing should outlive its use.
+  const counters = await sweepFailures(now);
+
+  console.log(`[sweep] scanned ${scanned} transfer(s), purged ${purged}, cleared ${counters} lockout counter(s)`);
 };
 
 export const config: Config = { schedule: '@hourly' };
