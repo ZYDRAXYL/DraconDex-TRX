@@ -88,12 +88,59 @@ function sweeps whatever nobody came back for.
 There are no accounts, so there is nothing to tie a transfer to a person: a
 transfer is an opaque blob, a hashed PIN and two hashed bearer tokens.
 
+## The send key — who may send at all
+
+Receiving needs the code and PIN a sender hands over. Sending used to need
+nothing, which made the service an anonymous upload box for anyone who found
+the URL. With the send key switched on, `/api/create` refuses a transfer
+until the sender types **this week's key** (`XXXX-XXXX-XXXX`, 60 bits).
+
+| | |
+|---|---|
+| **Where it comes from** | `HMAC-SHA256(TRX_SENDKEY_SECRET, week number)` → 12 Crockford characters. Nothing is stored; there is no job that rotates it. |
+| **When it changes** | Every Monday 00:00 at `TRX_SENDKEY_UTC_OFFSET_HOURS` (default `7`, Thailand). Last week's key keeps working for 2 hours after the rollover, so a sender mid-way through typing is not cut off. |
+| **Prepared ahead** | Next week's key already exists and is shown next to this week's, so it can be passed on before Monday. `npm run sendkey -- keys --weeks 8` prints further ahead. |
+| **Who can see it** | Only holders of a **viewer token**: `GET /api/sendkey` with `Authorization: Bearer <token>`, or the page at **`/key/`**. Tokens are granted per person and revoked by deleting one line. |
+| **Brute force** | 10 wrong keys (or viewer tokens) from one client in 15 minutes → `locked`. The counter is keyed by an HMAC of the IP, never the IP itself, and swept hourly. |
+| **If it leaks** | Rotate `TRX_SENDKEY_SECRET`. Every key — this week's and every prepared one — changes at once. |
+
+Errors a client maps: `send_key_required` (401 — ask the user for a key),
+`bad_send_key` (403), `locked` (429), `send_key_unavailable` (503 — the
+secret is set but malformed; the gate fails **closed**, never open).
+
+### Switching it on
+
+```bash
+npm run sendkey -- secret          # 32 random bytes → TRX_SENDKEY_SECRET
+npm run sendkey -- grant alice     # a token for alice + the line for TRX_SENDKEY_VIEWERS
+```
+
+In Netlify → *Site configuration → Environment variables*, set (scope:
+Functions, both marked secret):
+
+| Variable | Value |
+|---|---|
+| `TRX_SENDKEY_SECRET` | the output of `secret` |
+| `TRX_SENDKEY_VIEWERS` | `alice:<sha256>,bob:<sha256>` — the lines `grant` prints |
+| `TRX_SENDKEY_UTC_OFFSET_HOURS` | optional, default `7` |
+
+**Setting the secret is the switch.** Unset, `/api/create` behaves exactly as
+before — that is how this deploys ahead of the apps. Turn it on only once the
+DraconDex builds people use send a key (EXE and APK `sendKey`, same branch as
+this change); an older client that never asks gets `send_key_required` on
+every send.
+
+The viewer token is shown once, by `grant`, and the service keeps only its
+SHA-256: leaking the environment variable leaks no token. Give tokens over a
+channel you trust.
+
 ## Layout
 
 ```
 netlify.toml                  publish dir, functions dir, CSP, the /t/* rewrite
 netlify/functions/
-  create.mts                  POST   /api/create           mint a code, PIN and upload token
+  create.mts                  POST   /api/create           mint a code, PIN and upload token (needs the send key when on)
+  sendkey.mts                 GET    /api/sendkey          this week's + next week's send key (viewer token)
   chunk.mts                   PUT    /api/chunk/:id/:n     upload  (upload token)
                               GET    /api/chunk/:id/:n     download (receipt token)
   commit.mts                  POST   /api/commit           seal it: manifest, chunk count, optional pinWrap
@@ -105,9 +152,12 @@ netlify/functions/
   _lib/store.mts              the blob store, key layout, and purge
   _lib/codes.mts              code/PIN/token generation, hashing, and every limit
   _lib/http.mts               CORS, JSON helpers, the error vocabulary
+  _lib/sendkey.mts            the weekly key, viewers, and the lockout counter
+scripts/sendkey.mjs           operator CLI: secret / grant <name> / keys
 public/
   index.html                  Send / Receive
   t/index.html                where a scanned QR lands
+  key/index.html              the send-key viewer (token held in memory only)
   assets/js/ddx-crypto.js     THE WIRE FORMAT — see below
   assets/js/ddx-api.js        the protocol, client side
   assets/js/qrcode.js         vendored QR encoder (MIT, Kazuhiko Arase)

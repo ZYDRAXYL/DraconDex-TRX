@@ -2,12 +2,29 @@ import type { Config } from '@netlify/functions';
 import { transferStore, metaKey, codeKey, type TransferMeta } from './_lib/store.mts';
 import { LIMITS, generateCode, generatePin, displayCode, displayPin, hashPin, newSalt, mintToken, newTransferId } from './_lib/codes.mts';
 import { ok, fail, preflight, readJson } from './_lib/http.mts';
+import { gate, normalizeSendKey, sendKeyMatches, clientId, isLockedOut, recordFailure } from './_lib/sendkey.mts';
 
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') return preflight(req);
   if (req.method !== 'POST') return fail(req, 'bad_request');
 
   const body = await readJson(req);
+
+  // The send key, before anything else is looked at or written — a sender
+  // without it learns nothing about limits and claims no code.
+  const g = gate();
+  if (g.on === 'broken') return fail(req, 'send_key_unavailable');
+  if (g.on === true) {
+    const who = clientId(req, g);
+    if (await isLockedOut('create', who)) return fail(req, 'locked');
+    if (body?.sendKey == null || body.sendKey === '') return fail(req, 'send_key_required');
+    const typed = normalizeSendKey(body.sendKey);
+    if (!typed || !sendKeyMatches(g, typed)) {
+      await recordFailure('create', who);
+      return fail(req, 'bad_send_key');
+    }
+  }
+
   const sizeBytes = Number(body?.sizeBytes ?? 0);
   if (!Number.isFinite(sizeBytes) || sizeBytes < 0) return fail(req, 'bad_request');
   // Reject before the sender spends a minute uploading, not after.

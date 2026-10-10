@@ -45,7 +45,14 @@ it in `DraconDex-APP/.claude/` and run `npm run mirror --prefix ../DraconDex-APP
    apart turns the 8-character code into an oracle. Do not add a friendlier
    error here.
 
-5. **Purge lists the prefix; it never counts to `chunkCount`.** An upload that
+5. **The send key never becomes stored state.** It is derived per week from
+   `TRX_SENDKEY_SECRET` (`_lib/sendkey.mts`); viewer tokens exist here only as
+   SHA-256 hashes in `TRX_SENDKEY_VIEWERS`; the lockout counter is keyed by an
+   HMAC of the IP. Do not add a table of keys, log a token, or store an IP.
+   A malformed secret fails **closed** (`send_key_unavailable`); only an
+   *unset* secret turns the gate off, and that is the rollout switch.
+
+6. **Purge lists the prefix; it never counts to `chunkCount`.** An upload that
    never committed has `chunkCount: 0` and real chunks on disk — counting
    would leak the payload past its own expiry.
 
