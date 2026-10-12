@@ -81,6 +81,8 @@ directed.
 | a skill, an agent, `chain.json` | **APP** | then `node tools/mirror-claude.mjs` |
 | a plan, a process write-up, the changelog | **APP** | `Plan.md`, `process/`, `docs/CHANGELOG.md` stay project-wide |
 
+**Before building new UI in EXE or APK, read `docs/COMPONENTS.md` (in APP)** — the registry of shared components (popover, modal, chip, segmented, card, field, list) and their EXE function ↔ APK widget pairs.
+
 ## Three rules that are not negotiable
 
 **0. The DDX Transfer wire format is a three-way contract.**
