@@ -9,11 +9,20 @@
  */
 export type ErrCode =
   | 'bad_request' | 'bad_code' | 'locked' | 'expired' | 'gone'
-  | 'bad_token' | 'too_large' | 'not_ready' | 'server_error';
+  | 'bad_token' | 'too_large' | 'not_ready' | 'server_error'
+  | 'send_key_required' | 'bad_send_key' | 'send_key_unavailable';
 
+/**
+ * The three send-key codes (see _lib/sendkey.mts) are told apart on purpose,
+ * unlike bad_code: `send_key_required` is how a client learns it must ask the
+ * user for a key at all, and `bad_send_key` cannot be an oracle — there is one
+ * valid key per week, the same for everyone, so confirming a wrong guess says
+ * nothing about anyone's transfer.
+ */
 const STATUS: Record<ErrCode, number> = {
   bad_request: 400, bad_code: 403, locked: 429, expired: 410, gone: 410,
   bad_token: 401, too_large: 413, not_ready: 409, server_error: 500,
+  send_key_required: 401, bad_send_key: 403, send_key_unavailable: 503,
 };
 
 /**

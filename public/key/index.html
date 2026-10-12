@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" data-theme="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DDX Transfer — send key</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/assets/css/trx.css">
+<script src="/assets/js/theme.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1 data-i18n="key_title">Send key</h1>
+    <p data-i18n="key_tagline">For the people allowed to hand out this week's key.</p>
+  </header>
+
+  <!-- The viewer token never leaves this page's memory: no storage, no URL,
+       no autofill. Reloading the page forgets it, on purpose. -->
+  <div class="card" id="key-form">
+    <div class="field">
+      <label for="key-token" data-i18n="key_token_label">Your viewer token</label>
+      <input type="password" id="key-token" autocomplete="off" spellcheck="false">
+    </div>
+    <button class="btn" id="key-go" data-i18n="key_go">Show the key</button>
+    <div id="key-note" class="note hidden"></div>
+  </div>
+
+  <div class="card hidden" id="key-result">
+    <div class="codebox">
+      <div class="label" data-i18n="key_current">This week</div>
+      <div class="value" id="key-current">----–----–----</div>
+      <div class="note" id="key-current-range"></div>
+    </div>
+    <div class="codebox">
+      <div class="label" data-i18n="key_next">Next week (prepared)</div>
+      <div class="value" id="key-next">----–----–----</div>
+      <div class="note" id="key-next-range"></div>
+    </div>
+    <div class="note warn" data-i18n="key_warn">Give the key only to people who should be able to send. It changes by itself every Monday; if it leaks, the operator rotates the service secret and every key changes at once.</div>
+    <button class="btn secondary" id="key-copy" data-i18n="key_copy">Copy this week's key</button>
+    <button class="btn secondary" id="key-hide" data-i18n="key_hide">Hide</button>
+  </div>
+
+  <footer>
+    <p><a href="/" data-i18n="key_back">Back to DDX Transfer</a></p>
+  </footer>
+</div>
+
+<script src="/assets/js/strings.th.js"></script>
+<script src="/assets/js/lang.js"></script>
+<script src="/assets/js/sendkey-view.js"></script>
+</body>
+</html>

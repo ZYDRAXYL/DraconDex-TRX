@@ -32,7 +32,9 @@
       for (const pair of el.getAttribute('data-i18n-attr').split(',')) {
         const [attr, key] = pair.split(':').map((s) => s.trim());
         if (!attr || !key) continue;
-        const memo = `i18nAttr_${attr}`;
+        // dataset keys must be valid camelCase names — `i18nAttr_aria-label`
+        // threw and stopped every translation after it on the page.
+        const memo = `i18nAttr${attr.replace(/(^|-)([a-z])/g, (_, __, c) => c.toUpperCase())}`;
         if (!el.dataset[memo]) el.dataset[memo] = el.getAttribute(attr) || '';
         el.setAttribute(attr, t(key, el.dataset[memo]));
       }

@@ -17,6 +17,19 @@ export const LIMITS = {
   PBKDF2_ITERS: 100_000,
 } as const;
 
+/** The send key's numbers — see _lib/sendkey.mts for what each one guards. */
+export const SENDKEY = {
+  WEEK_MS: 7 * 24 * 60 * 60 * 1000,
+  /** A key typed in the last minutes of a week still works this long after. */
+  GRACE_MS: 2 * 60 * 60 * 1000,
+  /** Wrong keys (or viewer tokens) per client before it is locked out. */
+  MAX_FAILS: 10,
+  FAIL_WINDOW_MS: 15 * 60 * 1000,
+  MIN_SECRET_BYTES: 32,
+  /** Weeks start Monday 00:00 at this UTC offset — Thailand by default. */
+  DEFAULT_UTC_OFFSET_HOURS: 7,
+} as const;
+
 /**
  * Crockford Base32 minus I, L, O and U — the four that get misread or
  * mistyped when a code is read aloud down a phone line, which is exactly how

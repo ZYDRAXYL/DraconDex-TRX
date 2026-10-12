@@ -33,6 +33,10 @@
       bad_key: 'That link is incomplete — the key part is missing or damaged.',
       gzip_unsupported: 'This browser cannot decompress the payload. Try a newer one.',
       server_error: 'The transfer service had a problem.',
+      send_key_required: 'This service needs this week\'s send key before it will accept a file.',
+      bad_send_key: 'That send key is not right — or it is last week\'s. Keys change every Monday.',
+      send_key_locked: 'Too many wrong send keys from this connection. Wait 15 minutes and try again.',
+      send_key_unavailable: 'Sending is switched off on this service right now (its send key is not configured).',
     };
     return t(`err_${code}`, map[code] || map.server_error) + extra;
   }
@@ -83,6 +87,14 @@
     });
   }
 
+  /** XXXX-XXXX-XXXX as it is typed; the server forgives the rest. */
+  function bindSendKeyInput(input) {
+    input.addEventListener('input', () => {
+      const raw = input.value.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 12);
+      input.value = raw.match(/.{1,4}/g)?.join('-') || '';
+    });
+  }
+
   function bindPinInput(input) {
     input.addEventListener('input', () => {
       const raw = input.value.replace(/[^0-9]/g, '').slice(0, 6);
@@ -96,6 +108,8 @@
     const file = $('#send-file', root);
     const name = $('#send-name', root);
     const typed = $('#send-typed', root);
+    const sendKey = $('#send-key', root);
+    if (sendKey) bindSendKeyInput(sendKey);
     const go = $('#send-go', root);
     const bar = $('#send-progress', root);
     const note = $('#send-note', root);
@@ -131,6 +145,7 @@
           base: BASE,
           snapshot,
           name: name.value || f.name,
+          sendKey: sendKey ? sendKey.value : '',
           allowTypedCode: typed.checked,
           source: 'web',
           onProgress: (p) => { bar.value = p; },
