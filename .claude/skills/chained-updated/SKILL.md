@@ -87,7 +87,7 @@ working in `electron/src/renderer/**` can never conflict with the bot.
 ## Auth
 
 Cross-repo writes need `CHAIN_TOKEN`, a PAT with `contents: write` and
-`pull_requests: write` on all seven repos — a workflow's own `GITHUB_TOKEN` is
+`pull_requests: write` on all ten repos — a workflow's own `GITHUB_TOKEN` is
 scoped to its own repo and cannot do it. This repo already learned that lesson
 building the release mirror; `.github/scripts/mirror-release.sh` is the
 reference for how it must fail when the secret is absent:
