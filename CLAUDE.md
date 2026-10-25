@@ -64,6 +64,6 @@ npm test          # crypto contract + the whole protocol, no network
 npm run dev       # netlify dev, sandboxed local blob store
 ```
 
-`npm test` needs Node 22: it runs the real `.mts` handlers through
+`npm test` needs Node 22+ (CI runs 24, the current LTS): it runs the real `.mts` handlers through
 `--experimental-strip-types` with the blob store swapped out by
 `--experimental-test-module-mocks`.
